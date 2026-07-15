@@ -497,7 +497,7 @@ html[dir=ltr] .tst-body{text-align:left;}
       cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
       cv.style.width=W+'px';cv.style.height=H+'px';
       cx.setTransform(dpr,0,0,dpr,0,0);
-      if(!hot){tgt.x=pos.x=W/2;tgt.y=pos.y=H/2;vel.x=vel.y=0;}
+      if(!hot){tgt.x=pos.x=W*0.76;tgt.y=pos.y=H*0.24;vel.x=vel.y=0;}
       draw();
     }
     size();
@@ -511,7 +511,7 @@ html[dir=ltr] .tst-body{text-align:left;}
         tgt.y=Math.round((e.clientY-r.top)/SPACING)*SPACING;
         hot=true;run();
       });
-      hero.addEventListener('mouseleave',function(){hot=false;tgt.x=W/2;tgt.y=H/2;run();});
+      hero.addEventListener('mouseleave',function(){hot=false;tgt.x=W*0.76;tgt.y=H*0.24;run();});
     }
   }
   /* ---- NAV: dock to the top and flip to light once the navy hero is behind us ---- */
