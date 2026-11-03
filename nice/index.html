@@ -139,6 +139,16 @@ html[dir=ltr] .tst-body{text-align:left;}
   transition:background .2s,border-color .2s,transform .15s;}
 .tst-nav button:hover{background:var(--accent);border-color:var(--accent);}
 .tst-nav button:active{transform:scale(.93);}
+.tst-nav{align-items:center;}
+.tst-dots{display:flex;gap:8px;margin-inline-start:10px;}
+.tst-dots button{width:26px;height:4px;padding:0;border:0;border-radius:4px;background:rgba(255,255,255,.18);cursor:pointer;position:relative;overflow:hidden;}
+.tst-dots button:hover{background:rgba(255,255,255,.32);}
+.tst-dots i{position:absolute;inset:0;background:#fff;transform:scaleX(0);transform-origin:right;}
+html[dir=ltr] .tst-dots i{transform-origin:left;}
+.tst-dots .done i{transform:scaleX(1);}
+.tst-dots .on i{animation:tstFill var(--dur,5s) linear forwards;}
+.tst.paused .tst-dots .on i{animation-play-state:paused;}
+@keyframes tstFill{to{transform:scaleX(1);}}
 .tst-nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 /* ---------- FOOTER ---------- */
 .foot{background:var(--navy);color:#aab0d6;padding:40px 24px;text-align:center;border-top:1px solid rgba(255,255,255,.07);}
@@ -764,6 +774,7 @@ html[dir=ltr] .tst-body{text-align:left;}
         <div class="tst-nav">
           <button class="t-prev" aria-label="prev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
           <button class="t-next" aria-label="next"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <div class="tst-dots"><button aria-label="1"><i></i></button><button aria-label="2"><i></i></button><button aria-label="3"><i></i></button><button aria-label="4"><i></i></button><button aria-label="5"><i></i></button></div>
         </div>
       </div>
     </div>
@@ -895,11 +906,27 @@ html[dir=ltr] .tst-body{text-align:left;}
     quoteEl.innerHTML=t.q.split(' ').map(function(w,i){return '<span style="--w:'+i+'">'+esc(w)+'</span>';}).join(' ');
     nameEl.textContent=t.n;roleEl.textContent=t.r;
     if(!reduce){quoteEl.classList.remove('play');void quoteEl.offsetWidth;quoteEl.classList.add('play');}}
-  function go(a){if(!data.length)return;idx=((a)%data.length+data.length)%data.length;stack(idx);text(idx);}
-  function restart(){if(timer)clearInterval(timer);if(!reduce&&data.length)timer=setInterval(function(){go(idx+1);},5600);}
+  var DUR=5000,tstSec=document.querySelector('.tst'),left=DUR,t0=0,paused=false;
+  var dots=[].slice.call(document.querySelectorAll('.tst-dots button'));
+  function paint(){dots.forEach(function(d,k){d.classList.remove('on','done');
+    if(k<idx)d.classList.add('done');});
+    if(dots[idx]){void dots[idx].offsetWidth;dots[idx].style.setProperty('--dur',DUR+'ms');dots[idx].classList.add('on');}}
+  function go(a){if(!data.length)return;idx=((a)%data.length+data.length)%data.length;stack(idx);text(idx);paint();}
+  function arm(ms){if(timer)clearTimeout(timer);t0=Date.now();left=ms;
+    timer=setTimeout(function(){go(idx+1);arm(DUR);},ms);}
+  function restart(){paused=false;if(tstSec)tstSec.classList.remove('paused');arm(DUR);}
+  function pause(){if(paused)return;paused=true;clearTimeout(timer);left=Math.max(0,left-(Date.now()-t0));if(tstSec)tstSec.classList.add('paused');}
+  function resume(){if(!paused)return;paused=false;if(tstSec)tstSec.classList.remove('paused');arm(left);}
   if(pv)pv.addEventListener('click',function(){go(idx-1);restart();});
   if(nx)nx.addEventListener('click',function(){go(idx+1);restart();});
-  if(media.length){stack(0);restart();}
+  dots.forEach(function(d,k){d.addEventListener('click',function(){go(k);restart();});});
+  var wrap=document.querySelector('.tst-wrap');
+  if(wrap){wrap.addEventListener('mouseenter',pause);wrap.addEventListener('mouseleave',resume);
+    var sx=null;wrap.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+    wrap.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;
+      if(Math.abs(dx)>40){go(idx+(dx>0?1:-1));restart();}},{passive:true});}
+  document.addEventListener('visibilitychange',function(){document.hidden?pause():resume();});
+  if(media.length){stack(0);paint();restart();}
   function setLang(l){
     lang=l;
     document.documentElement.setAttribute('lang',l);
